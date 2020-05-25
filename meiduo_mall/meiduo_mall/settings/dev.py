@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'apps.users',  # 注册子应用
 ]
 
 MIDDLEWARE = [
@@ -78,7 +80,7 @@ WSGI_APPLICATION = 'meiduo_mall.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'HOST': '192.168.80.156',  # 数据库主机
+        'HOST': '192.168.80.157',  # 数据库主机
         'PORT': 3306,  # 数据库端口
         'USER': 'itcast_0417',  # 数据库用户名
         'PASSWORD': '123456',  # 数据库用户密码
@@ -90,7 +92,7 @@ DATABASES = {
 CACHES = {
     "default": { # 默认存储信息: 存到 0 号库
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.80.156:6379/0",
+        "LOCATION": "redis://192.168.80.157:6379/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -98,7 +100,7 @@ CACHES = {
     # 需求是将session存到1号库
     "session": {  # session 信息: 存到 1 号库
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.80.156:6379/1",
+        "LOCATION": "redis://192.168.80.157:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -188,3 +190,9 @@ LOGGING = {
         },
     }
 }
+
+# 指定django的默认用户模型类为自定义的用户模型类
+# AUTH_USER_MODEL = 'auth.User'是django默认的
+# AUTH_USER_MODEL = '子应用.自定义用户模型类'
+
+AUTH_USER_MODEL = 'users.User'
