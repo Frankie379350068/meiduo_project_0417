@@ -50,7 +50,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware', # 为了POST请求成功，先注释
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -92,7 +92,7 @@ WSGI_APPLICATION = 'meiduo_mall.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'HOST': '192.168.80.157',  # 数据库主机
+        'HOST': '192.168.80.158',  # 数据库主机
         'PORT': 3306,  # 数据库端口
         'USER': 'itcast_0417',  # 数据库用户名
         'PASSWORD': '123456',  # 数据库用户密码
@@ -104,7 +104,7 @@ DATABASES = {
 CACHES = {
     "default": { # 默认存储信息: 存到 0 号库
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.80.157:6379/0",
+        "LOCATION": "redis://192.168.80.158:6379/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -112,7 +112,7 @@ CACHES = {
     # 需求是将session存到1号库
     "session": {  # session 信息: 存到 1 号库
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.80.157:6379/1",
+        "LOCATION": "redis://192.168.80.158:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
