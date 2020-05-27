@@ -40,9 +40,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'corsheaders',  # 解决跨域的
+    'corsheaders',  # 解决跨域访问问题
 
-    'apps.users',  # 注册子应用
+    'apps.users',  # 注册子应用users
+    'apps.verifications' # 注册子应用verifications，用于图形验证码
 ]
 
 MIDDLEWARE = [
@@ -117,6 +118,14 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
+
+    "verify_code": {  # session 信息: 存到 2 号库, 图形验证码
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": "redis://192.168.80.158:6379/2",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            }
+        },
 }
 # 配置session后端， django默认的session配置是dbmysql数据库，现改成redis数据库
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"

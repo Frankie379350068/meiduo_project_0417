@@ -3,6 +3,7 @@ from django.views import View
 from django import http
 import logging, json
 import re
+from django.contrib.auth import  login
 
 from .models import User
 
@@ -31,7 +32,7 @@ class RegisterView(View):
 
         # 校验参数
         # 判断是否缺少必传参数，即上述五个数据不能有空值
-        # all()方法判断是否缺少必传参数
+        # all()方法判断是否缺少必传参数，底层封装好的方法
         if not all([username, password, password2, mobile, allow]):
             return http.JsonResponse({'code': 400, 'errmsg': '缺少必传参数'})
         # 判断用户名格式是否满足要求，防止用户乱写
@@ -58,6 +59,7 @@ class RegisterView(View):
             return http.JsonResponse({'code': 400, 'errmsg': '注册失败'})
 
         # 实现状态保持：用户注册成功即登录成功
+        login(request, user)
 
         # 响应结果, 如果注册成功，前端会引导到首页，引导代码是前端写的
         return http.JsonResponse({'code': 0, 'errmsg': '注册成功'})
