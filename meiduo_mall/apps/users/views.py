@@ -4,8 +4,8 @@ from django import http
 import logging, json
 import re
 from django.contrib.auth import  login
-
 from .models import User
+from django_redis import get_redis_connection
 
 # Create your views here.
 # 日志输出器
@@ -29,6 +29,8 @@ class RegisterView(View):
         password2 = json_dict.get('password2')
         mobile = json_dict.get('mobile')
         allow = json_dict.get('allow')
+        # 提取短信验证码参数
+        sms_code_client = json_dict.get('sms_code')
 
         # 校验参数
         # 判断是否缺少必传参数，即上述五个数据不能有空值
@@ -50,6 +52,17 @@ class RegisterView(View):
         # 判断是否同意用户协议
         if allow != True:
             return http.JsonResponse({'code': 400, 'errmsg': '参数allow有误'})
+        # 判断短信验证码是否正确
+        # 提取服务端存储的短信验证码
+        redis_conn = get_redis_connection('verify_code')
+        sms_code_server = redis_conn.get('sms_%s' % mobile)
+        # 判断服务器端的短信验证码是否过期
+        if not sms_code_server:
+            return http.JsonResponse({'code': 400, 'errmsg': '短信验证码过期'})
+        # 从redis提取出来的数据一定要由bytes类型转换为str类型再比较
+        if sms_code_client != sms_code_server.decode():
+            return http.JsonResponse({'code': 400, 'errmsg': '短信验证码有误'})
+
         # 实现核心逻辑：保存用户注册数据到数据表
         # 模型类.objects.create_user()进行数据添加，如果用create()需要自己设置默认值，密码需要自己加密
         try: # create_user()有返回值 return user, 可以整一个变量保存

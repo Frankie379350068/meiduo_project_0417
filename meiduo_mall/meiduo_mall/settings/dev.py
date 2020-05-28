@@ -93,7 +93,7 @@ WSGI_APPLICATION = 'meiduo_mall.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'HOST': '192.168.80.158',  # 数据库主机
+        'HOST': '192.168.80.129',  # 数据库主机
         'PORT': 3306,  # 数据库端口
         'USER': 'itcast_0417',  # 数据库用户名
         'PASSWORD': '123456',  # 数据库用户密码
@@ -105,7 +105,7 @@ DATABASES = {
 CACHES = {
     "default": { # 默认存储信息: 存到 0 号库
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.80.158:6379/0",
+        "LOCATION": "redis://192.168.80.129:6379/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -113,7 +113,7 @@ CACHES = {
     # 需求是将session存到1号库
     "session": {  # session 信息: 存到 1 号库
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.80.158:6379/1",
+        "LOCATION": "redis://192.168.80.129:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -121,7 +121,7 @@ CACHES = {
 
     "verify_code": {  # session 信息: 存到 2 号库, 图形验证码
             "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": "redis://192.168.80.158:6379/2",
+            "LOCATION": "redis://192.168.80.129:6379/2",
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
             }
