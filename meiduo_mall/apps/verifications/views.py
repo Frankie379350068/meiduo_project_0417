@@ -6,6 +6,8 @@ from django import http
 import random, logging
 from apps.verifications.libs.yuntongxun.ccp_sms import CCP
 
+from celery_tasks.sms.tasks import ccp_send_sms_code
+
 # Create your views here.
 # 创建日志输出器
 logger = logging.getLogger('django')
@@ -65,7 +67,11 @@ class SMSCodeView(View):
         pl.execute()
 
         # 发送短信验证码
-        CCP().send_template_sms(mobile, [sms_code, 5], 1)
+        # CCP().send_template_sms(mobile, [sms_code, 5], 1)
+
+        # 使用celery异步任务去发送短信验证码
+        # 异步函数.delay('参数')表示代码执行到此，该函数不会执行，先放行，让下一个代码执行
+        ccp_send_sms_code.delay(mobile, sms_code)
         # 响应结果
         return http.JsonResponse({'code': 0, 'errmsg': '短信验证码发送成功'})
 
