@@ -8,4 +8,7 @@ urlpatterns = [
     path('usernames/<username:username>/count/', views.UsernameCountView.as_view()),
     # 用户注册地址: /register/
     path('register/', views.RegisterView.as_view()),
+    # 用户登录地址: www.meiduo.site:8080/login/
+    path('login/', views.LoginView.as_view()),
+
 ]

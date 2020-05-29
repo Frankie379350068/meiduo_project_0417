@@ -3,7 +3,7 @@ from django.views import View
 from django import http
 import logging, json
 import re
-from django.contrib.auth import  login
+from django.contrib.auth import login, authenticate
 from .models import User
 from django_redis import get_redis_connection
 
@@ -11,6 +11,49 @@ from django_redis import get_redis_connection
 # 日志输出器
 logger = logging.getLogger('django')
 
+
+class LoginView(View):
+    def post(self, request):
+        # 接收参数
+        json_dict = json.loads(request.body.decode())
+        account = json_dict.get('username')
+        password = json_dict.get('password')
+        # True==False，可真可假，可传可不传
+        remembered = json_dict.get('remembered')
+
+        # 校验参数
+        if not all([account, password]):
+            return http.JsonResponse({'code':400, 'errmsg':'缺少必传参数'})
+        # if not re.match(r'^[0-9A-Za-z_-]{5,20}$', account):
+        #     return http.JsonResponse({'code':400, 'errmsg':'用户名username格式错误'})
+        if not re.match(r'^[0-9A-Za-z]{8,20}$', password):
+            return http.JsonResponse({'code':400, 'errmsg':'密码password格式错误'})
+
+        # 实现多账号登录
+        # 判断用户输入的是用户名还是手机号
+        if re.match(r'^1[3-9]\d{9}$', account):
+            User.USERNAME_FIELD = 'mobile'
+        else:
+            User.USERNAME_FIELD = 'username'
+
+
+        # 核心业务逻辑
+        # 核心思想：先判断用户名在数据库中是否存在，如果不存在则返回，存在则校验密码是否正确
+        # django封装的authenticate()只是证明该用户是注册用户，且密码没错，但是并不代表登录是它执行的
+        user = authenticate(request=request, username=account, password= password)
+        if not user:
+            # 一定要写'用户名或者密码错误', 不能把真实的情况告诉用户，安全性考虑！
+            return http.JsonResponse({'code': 400, 'errmsg': '用户名或者密码错误'})
+        # 实现状态保持
+        login(request, user)
+        # 依据remembered的值来设置session状态保持周期
+        # 如果用户选择了'记住登录状态'，则默认保持两周，否则在浏览器会话结束后，状态保持就销毁
+        if remembered:
+            request.session.set_expiry(None)
+        else:
+            request.session.set_expiry(0)
+        # 响应结果
+        return http.JsonResponse({'code': 0, 'errmsg': '登录成功'})
 
 class RegisterView(View):
     '''用户注册地址
