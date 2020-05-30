@@ -3,13 +3,40 @@ from django.views import View
 from django import http
 import logging, json
 import re
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from .models import User
 from django_redis import get_redis_connection
+
+from meiduo_mall.utils.views import LoginRequiredJSONMixin
 
 # Create your views here.
 # 日志输出器
 logger = logging.getLogger('django')
+
+
+class UserInfoView(LoginRequiredJSONMixin,View):
+    # 如果未登录，返回400状态码，errmsg为'用户未登录'数据给前端
+    # 如果登录，继续分发请求
+    def get(self, request):
+        json_dict = {'code': 0,
+                     'errmsg': 'ok',
+                     'info_data': {
+                         'username': '',
+                         'mobile':'',
+                         'email': '',
+                         'email_active': ''}
+                     }
+        return http.JsonResponse(json_dict)
+
+
+class LogoutView(View):
+    def delete(self, request):
+        # 清除登录状态,清楚服务端的session
+        logout(request)
+        # 响应对象
+        response = http.JsonResponse({'code': 0, 'errmsg': 'ok'})
+        response.delete_cookie('username')
+        return response
 
 
 class LoginView(View):
@@ -23,11 +50,11 @@ class LoginView(View):
 
         # 校验参数
         if not all([account, password]):
-            return http.JsonResponse({'code':400, 'errmsg':'缺少必传参数'})
+            return http.JsonResponse({'code': 400, 'errmsg': '缺少必传参数'})
         # if not re.match(r'^[0-9A-Za-z_-]{5,20}$', account):
         #     return http.JsonResponse({'code':400, 'errmsg':'用户名username格式错误'})
         if not re.match(r'^[0-9A-Za-z]{8,20}$', password):
-            return http.JsonResponse({'code':400, 'errmsg':'密码password格式错误'})
+            return http.JsonResponse({'code': 400, 'errmsg': '密码password格式错误'})
 
         # 实现多账号登录
         # 判断用户输入的是用户名还是手机号
@@ -36,11 +63,10 @@ class LoginView(View):
         else:
             User.USERNAME_FIELD = 'username'
 
-
         # 核心业务逻辑
         # 核心思想：先判断用户名在数据库中是否存在，如果不存在则返回，存在则校验密码是否正确
         # django封装的authenticate()只是证明该用户是注册用户，且密码没错，但是并不代表登录是它执行的
-        user = authenticate(request=request, username=account, password= password)
+        user = authenticate(request=request, username=account, password=password)
         if not user:
             # 一定要写'用户名或者密码错误', 不能把真实的情况告诉用户，安全性考虑！
             return http.JsonResponse({'code': 400, 'errmsg': '用户名或者密码错误'})
@@ -52,8 +78,12 @@ class LoginView(View):
             request.session.set_expiry(None)
         else:
             request.session.set_expiry(0)
+        # 创建响应对象，写入cookie
+        response = http.JsonResponse({'code': 0, 'errmsg': '登录成功'})
+        response.set_cookie('username', user.username, max_age=14 * 24 * 3600)
         # 响应结果
-        return http.JsonResponse({'code': 0, 'errmsg': '登录成功'})
+        return response
+
 
 class RegisterView(View):
     '''用户注册地址
@@ -108,7 +138,7 @@ class RegisterView(View):
 
         # 实现核心逻辑：保存用户注册数据到数据表
         # 模型类.objects.create_user()进行数据添加，如果用create()需要自己设置默认值，密码需要自己加密
-        try: # create_user()有返回值 return user, 可以整一个变量保存
+        try:  # create_user()有返回值 return user, 可以整一个变量保存
             user = User.objects.create_user(username=username, password=password, mobile=mobile)
         except Exception as e:
             logger.error(e)
