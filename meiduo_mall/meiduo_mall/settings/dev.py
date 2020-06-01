@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'corsheaders',  # 解决跨域访问问题
 
     'apps.users',  # 注册子应用users
-    'apps.verifications' # 注册子应用verifications，用于图形验证码
+    'apps.verifications',  # 注册子应用verifications，用于图形验证码
+    'apps.oauth',  # 注册子应用oauth，用于第三方认证
 ]
 
 MIDDLEWARE = [
@@ -217,3 +218,8 @@ LOGGING = {
 # AUTH_USER_MODEL = '子应用.自定义用户模型类'
 
 AUTH_USER_MODEL = 'users.User'
+
+# QQ登录参数
+QQ_CLIENT_ID = '101474184' # 我们申请的 客户端id
+QQ_CLIENT_SECRET = 'c6ce949e04e12ecc909ae6a8b09b637c' # 我们申请的 客户端秘钥
+QQ_REDIRECT_URI = 'http://www.meiduo.site:8080/oauth_callback.html' # 登录成功后回调的路径
