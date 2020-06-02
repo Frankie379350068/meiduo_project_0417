@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'apps.users',  # 注册子应用users
     'apps.verifications',  # 注册子应用verifications，用于图形验证码
     'apps.oauth',  # 注册子应用oauth，用于第三方认证
+    'apps.areas',
 ]
 
 MIDDLEWARE = [
@@ -223,3 +224,21 @@ AUTH_USER_MODEL = 'users.User'
 QQ_CLIENT_ID = '101474184' # 我们申请的 客户端id
 QQ_CLIENT_SECRET = 'c6ce949e04e12ecc909ae6a8b09b637c' # 我们申请的 客户端秘钥
 QQ_REDIRECT_URI = 'http://www.meiduo.site:8080/oauth_callback.html' # 登录成功后回调的路径
+
+# 发送短信的相关设置, 这些设置是当用户没有发送相关字段时, 默认使用的内容:
+# 发送短信必须进行的设置:
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# 我们使用的 smtp服务器 地址
+EMAIL_HOST = 'smtp.163.com'
+# 端口号
+EMAIL_PORT = 25
+# 下面的内容是可变的, 随后台设置的不同而改变:
+# 发送邮件的邮箱
+EMAIL_HOST_USER = 'chenhuang379350068@163.com'
+# 在邮箱中设置的客户端授权密码
+EMAIL_HOST_PASSWORD = 'KPUQOFDOKOKSYALD'
+# 收件人看到的发件人
+EMAIL_FROM = '美多商城<chenhuang379350068@163.com>'
+
+# 邮箱验证链接
+EMAIL_VERIFY_URL = 'http://www.meiduo.site:8080/success_verify_email.html?token='
