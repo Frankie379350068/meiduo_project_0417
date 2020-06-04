@@ -4,7 +4,7 @@ from django import http
 import logging, json
 import re
 from django.contrib.auth import login, authenticate, logout
-from .models import User
+from .models import User, Address
 from django_redis import get_redis_connection
 
 from meiduo_mall.utils.views import LoginRequiredJSONMixin
@@ -14,6 +14,106 @@ from apps.users.utils import generate_verify_email_url, check_verify_email_url
 # Create your views here.
 # 日志输出器
 logger = logging.getLogger('django')
+
+
+class AddressView(LoginRequiredJSONMixin,View):
+    def get(self, request):
+        # 获取收货地址接口:GET http://www.meiduo.site:8000/addresses/
+        # 查询默认地址
+        default_address_id = request.user.default_address_id
+        # 获取当前用户的所有地址
+        address_model_list = request.user.addresses.all()
+        address_dict_list = []
+        for address in address_model_list:
+            print('查看：', address.province, address.city, address.district)
+            address_dict = {
+                "id": address.id,
+                "title": address.title,
+                "receiver": address.receiver,
+                "province": address.province.name,
+                "city": address.city.name,
+                "district": address.district.name,
+                "place": address.place,
+                "mobile": address.mobile,
+                "tel": address.tel,
+                "email": address.email
+            }
+            address_dict_list.append(address_dict)
+
+        return http.JsonResponse({
+            'code': 0,
+            'errmsg': 'ok',
+            'default_address_id':default_address_id,
+            'addresses': address_dict_list
+                                  })
+
+
+class CreateAddressView(LoginRequiredJSONMixin, View):
+    # 保存收货地址接口:
+    def post(self, request):
+        # 补充逻辑： 每次新增地址前，先判断未被逻辑删除的地址上限是否超过了3条
+        count = request.user.addresses.filter(is_deleted=False).count()
+        if count >= 3:
+            return http.JsonResponse({'code': 400, 'errmsg': '邮箱地址数量超过上限'})
+        # 接收参数并提取
+        json_dict = json.loads(request.body.decode())
+        receiver = json_dict.get('receiver')
+        province_id = json_dict.get('province_id')
+        city_id = json_dict.get('city_id')
+        district_id = json_dict.get('district_id')
+        place = json_dict.get('place')
+        mobile = json_dict.get('mobile')
+        tel = json_dict.get('tel')  # 非必传
+        email = json_dict.get('email')  # 非必传
+        # 校验参数
+        if not all([receiver, province_id, city_id, district_id, place, mobile]):
+            return http.JsonResponse({'code': 400, 'errmsg': '缺少必传参数'})
+        # 校验格式: province_id, city_id, district_id这三个已经通过外键约束，不必再次检验
+        if not re.match(r'^1[3-9]\d{9}$', mobile):
+            return http.JsonResponse({'code': 400,
+                                      'errmsg': '参数mobile有误'})
+
+        if tel:
+            if not re.match(r'^(0[0-9]{2,3}-)?([2-9][0-9]{6,7})+(-[0-9]{1,4})?$', tel):
+                return http.JsonResponse({'code': 400,
+                                          'errmsg': '参数tel有误'})
+        if email:
+            if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+                return http.JsonResponse({'code': 400,
+                                          'errmsg': '参数email有误'})
+        # 实现添加收货地址
+        try:
+            address = Address.objects.create(
+                user=request.user,
+                receiver=receiver,
+                province_id=province_id,
+                city_id=city_id,
+                district_id=district_id,
+                place=place,
+                mobile=mobile,
+                tel=tel,
+                email=email,
+            )
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code': 400, 'errmsg': '添加地址失败'})
+        # 补充逻辑： 如果当前用户无默认地址，则设置新增地址为默认地址
+        if not request.user.default_address:
+            request.user.default_address = address
+            request.user.save()
+        address_dict = {
+            'id': address.id,
+            'receiver': address.receiver,
+            'province': address.province.name,
+            'city': address.city.name,
+            'district': address.district.name,
+            'place': address.place,
+            'mobile': address.mobile,
+            'tel': address.tel,
+            'email': address.email,
+        }
+        # 响应结果
+        return http.JsonResponse({'code': 0, 'errmsg': '添加地址成功', 'address': address_dict})
 
 
 class EmailVerifyView(View):
